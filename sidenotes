@@ -1,0 +1,2 @@
+package command (under the package directory, eg. nettyServer/webSocketServer): mvn clean package
+package execution command (also under the package directory): mvn exec:java -Dexec.mainClass="com.EchoClient" -Dexec.args="127.0.0.1 9999"
