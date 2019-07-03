@@ -37,7 +37,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
     private WebSocketServerHandshaker handshaker;
 
-
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg)
             throws Exception {
@@ -100,7 +99,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             for(ClientInfo client : clientGroup){
                 if(/*client.context != ctx &&*/ client.isSubscribed(ctx)){
                     try{
-                        System.out.println("Sending audio to: " + client.name);
+//                        System.out.println("Sending audio to: " + client.name);
                         client.context.write(frame.retain());
                     }catch (Exception e){
                         inactiveClient.add(client);

@@ -8,8 +8,10 @@
         <outputRelativeToContentRoot value="true" />
         <module name="clientSide" />
         <module name="serverSide" />
-        <module name="webSocketServer" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="voiceRecognitionServer" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
