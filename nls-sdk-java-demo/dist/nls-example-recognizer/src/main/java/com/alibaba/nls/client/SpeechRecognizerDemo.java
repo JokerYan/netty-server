@@ -9,6 +9,8 @@ import com.alibaba.nls.client.protocol.asr.SpeechRecognizer;
 import com.alibaba.nls.client.protocol.asr.SpeechRecognizerListener;
 import com.alibaba.nls.client.protocol.asr.SpeechRecognizerResponse;
 
+import com.audio.AudioCapture;
+
 /**
  * @author zhishen.ml
  * @date 2018-06-12
@@ -16,6 +18,7 @@ import com.alibaba.nls.client.protocol.asr.SpeechRecognizerResponse;
 public class SpeechRecognizerDemo {
     private String appKey;
     private String accessToken;
+    private static long startTime;
     NlsClient client;
 
     public SpeechRecognizerDemo(String appKey, String token) {
@@ -37,6 +40,7 @@ public class SpeechRecognizerDemo {
             //识别出中间结果.服务端识别出一个字或词时会返回此消息.仅当setEnableIntermediateResult(true)时,才会有此类消息返回
             @Override
             public void onRecognitionResultChanged(SpeechRecognizerResponse response) {
+                measureTime("after partial recognition");
                 //事件名称 RecognitionResultChanged
                 System.out.println("name: " + response.getName() +
                     //状态码 20000000 表示识别成功
@@ -48,6 +52,7 @@ public class SpeechRecognizerDemo {
             //识别完毕
             @Override
             public void onRecognitionCompleted(SpeechRecognizerResponse response) {
+                measureTime("after recognition complet");
                 //事件名称 RecognitionCompleted
                 System.out.println("name: " + response.getName() +
                     //状态码 20000000 表示识别成功
@@ -79,6 +84,7 @@ public class SpeechRecognizerDemo {
     public void process(InputStream ins) {
         SpeechRecognizer recognizer = null;
         try {
+            measureTime("before configuration");
             //创建实例,建立连接
             recognizer = new SpeechRecognizer(client, getRecognizerListener());
             recognizer.setAppKey(appKey);
@@ -88,13 +94,19 @@ public class SpeechRecognizerDemo {
             recognizer.setSampleRate(SampleRateEnum.SAMPLE_RATE_16K);
             //设置是否返回中间识别结果
             recognizer.setEnableIntermediateResult(true);
+            measureTime("after configuration");
 
             //此方法将以上参数设置序列化为json发送给服务端,并等待服务端确认
             recognizer.start();
+            measureTime("after start");
             //语音数据来自声音文件用此方法,控制发送速率;若语音来自实时录音,不需控制发送速率直接调用 recognizer.sent(ins)即可
-            recognizer.send(ins, 3200, 100);
+            // recognizer.send(ins, 3200, 100);
+            recognizer.send(ins);
+            measureTime("after sending");
             //通知服务端语音数据发送完毕,等待服务端处理完成
+            while(!AudioCapture.stopped){};
             recognizer.stop();
+            measureTime("after stop");
 
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -108,6 +120,12 @@ public class SpeechRecognizerDemo {
 
     public void shutdown() {
         client.shutdown();
+    }
+
+    public static void measureTime(String msg){
+        System.out.print("--------------  " + msg + ": ");
+        System.out.print(System.currentTimeMillis() - startTime);
+        System.out.println("--------------");
     }
 
     public static void main(String[] args) throws Exception {
@@ -130,13 +148,23 @@ public class SpeechRecognizerDemo {
                 "<app-key> <token> [<url>]");
             System.exit(-1);
         }
-        InputStream ins = SpeechRecognizerDemo.class.getResourceAsStream("/nls-sample-16k.wav");
-        if (null == ins) {
-            System.err.println("open the audio file failed!");
+        // InputStream ins = SpeechRecognizerDemo.class.getResourceAsStream("/nls-sample-16k.wav");
+        // InputStream ins = SpeechRecognizerDemo.class.getResourceAsStream("/floors.wav");
+        
+        // InputStream ins = AudioCapture.input;
+        AudioCapture.Capture();
+
+        startTime = System.currentTimeMillis();
+
+        while(null == AudioCapture.input){
+            System.out.println("Input stream not ready");
+        };
+
+        if (null == AudioCapture.input) {
+            System.err.println("Open the audio file failed!");
             System.exit(-1);
         }
-        demo.process(ins);
+        demo.process(AudioCapture.input);
         demo.shutdown();
     }
-
 }
